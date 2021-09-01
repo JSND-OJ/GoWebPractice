@@ -43,20 +43,20 @@ func TestUploadTest(t *testing.T) {
 	log.Print(string(data))
 
 	//2단계 원본파일과 업로드파일 성공여부 검증 테스팅
-	uploadFilePath := "./uploads/" + filepath.Base(path)
-	_, err = os.Stat(uploadFilePath) //stat은 파일정보를 알려준다
-	assert.NoError(err)              //통과되면 파일이 존재한다는 의미
+	uploadFilePath := "./uploads/" + filepath.Base(path) //업로드 되는 경로. base 마지막 요소만 끊어냄
+	_, err = os.Stat(uploadFilePath)                     //파일이 잘 들어있는지 확인. stat은 파일정보를 알려준다(반환)
+	assert.NoError(err)                                  //통과되면 파일이 존재한다는 의미
 
 	uploadFile, _ := os.Open(uploadFilePath)
 	originFile, _ := os.Open(path)
 	defer uploadFile.Close()
 	defer originFile.Close()
 
-	uploadData := []byte{} //업로드 데이터 읽어온다
-	originData := []byte{} // 오리진 데이터 읽어온다
-	uploadFile.Read(uploadData)
-	originFile.Read(originData)
+	uploadData := []byte{}      //업로드 데이터 읽어온다. 리드 함수에 사용될 바이트어레이 형식
+	originData := []byte{}      // 오리진 데이터 읽어온다
+	uploadFile.Read(uploadData) // 바이트 어레이를 사용하여 데이터를 불러온더. 경로정보
+	originFile.Read(originData) // 경로정보
 
 	assert.Equal(originData, uploadData)
-
+	log.Print()
 }
