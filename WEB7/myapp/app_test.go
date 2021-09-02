@@ -114,3 +114,38 @@ func TestCreateUser(t *testing.T) {
 	log.Print(user2.CreatedAt)
 
 }
+
+func TestDeleteUser(t *testing.T) {
+	assert := assert.New(t)
+
+	ts := httptest.NewServer(NewHandler())
+	defer ts.Close()
+
+	req, _ := http.NewRequest("DELETE", ts.URL+"/users/1", nil) //delete는 기본 메소드가 아니다
+	resp, err := http.DefaultClient.Do(req)                     //그래서 do로 위의 리퀘스트를 불러옴. Do메소드가 Delete메소드처럼 일함.
+	assert.NoError(err)
+	assert.Equal(http.StatusOK, resp.StatusCode)
+	data, _ := ioutil.ReadAll(resp.Body)
+	log.Print(string(data)) //
+	assert.Contains(string(data), "No User ID:1")
+
+	//만들고
+	resp, err = http.Post(ts.URL+"/users", "application/json",
+		strings.NewReader(`{"first_name":"Jungheon", "last_name":"Oh", "email":"cuttleoh@naver.com"}`))
+	assert.NoError(err)
+	assert.Equal(http.StatusCreated, resp.StatusCode)
+
+	user := new(User)
+	err = json.NewDecoder(resp.Body).Decode(user)
+	assert.NoError(err)
+	assert.NotEqual(0, user.ID)
+
+	//다시 삭제
+	req, _ = http.NewRequest("DELETE", ts.URL+"/users/1", nil)
+	resp, err = http.DefaultClient.Do(req)
+	assert.NoError(err)
+	assert.Equal(http.StatusOK, resp.StatusCode)
+	data, _ = ioutil.ReadAll(resp.Body)
+	assert.Contains(string(data), "Deleted User ID:1")
+	log.Print(string(data))
+}

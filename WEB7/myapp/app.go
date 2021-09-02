@@ -10,17 +10,17 @@ import (
 	"github.com/gorilla/mux"
 )
 
-var userMap map[int]*User //메인함수 뉴핸들러 시점에서 초기화
-var lastID int            //마지막 id 등록
-
 // User struct
-type User struct { //josn을 읽을 수 있는 스트럭트. id정수형 추가
+type User struct {
 	ID        int       `json:"id"`
 	FirstName string    `json:"first_name"`
 	LastName  string    `json:"last_name"`
 	Email     string    `json:"email"`
 	CreatedAt time.Time `json:"created_at"`
 }
+
+var userMap map[int]*User
+var lastID int
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, "Hello World")
@@ -31,21 +31,23 @@ func usersHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func getUserInfoHandler(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)                 //vars가 자동으로id 파싱
-	id, err := strconv.Atoi(vars["id"]) //vars는 string이므로 atoi로 int정수형으로 바꾸면 첫번째 인티저형id와 두번쨰 err 반환
+	vars := mux.Vars(r)
+	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprint(w, err)
 		return
 	}
 	user, ok := userMap[id]
-	if !ok { //ok가 없다면 즉 해당 id가 없으면
+	if !ok {
+		w.WriteHeader(http.StatusOK)
 		fmt.Fprint(w, "No User Id:", id)
 		return
 	}
 
 	w.Header().Add("Content-Type", "application/json")
-	data, _ := json.Marshal(user) //go value로 된 유저정보를 json 문자열로 변환해서 data와 err 리턴, err는 무시
+	w.WriteHeader(http.StatusOK)
+	data, _ := json.Marshal(user)
 	fmt.Fprint(w, string(data))
 }
 
@@ -59,25 +61,46 @@ func createUserHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Created User
-	lastID++ //id가 만들어질때마다 user르 기억하고 등록 .하나씩 증가
+	lastID++
 	user.ID = lastID
 	user.CreatedAt = time.Now()
-	userMap[user.ID] = user //id증가값 유저맵에 담김
+	userMap[user.ID] = user
 
 	w.Header().Add("Content-Type", "application/json")
-	data, _ := json.Marshal(user) //유저정보 마샬링(go value -> json)해서 바이트 어레이로 바꾸고 데이터에 넣어줌
+	w.WriteHeader(http.StatusCreated)
+	data, _ := json.Marshal(user)
 	fmt.Fprint(w, string(data))
+}
+
+func deleteUserHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id, err := strconv.Atoi(vars["id"])
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprint(w, err)
+		return
+	}
+	_, ok := userMap[id]
+	if !ok {
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprint(w, "No User ID:", id)
+		return
+	}
+	delete(userMap, id)
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprint(w, "Deleted User ID:", id)
 }
 
 // NewHandler make a new myapp handler
 func NewHandler() http.Handler {
-	userMap = make(map[int]*User) //유저 스트럭트의 유저 정보를 담을 맵 생성
-	lastID = 0                    //사용하기 전에 초기화
+	userMap = make(map[int]*User)
+	lastID = 0
 	mux := mux.NewRouter()
 
 	mux.HandleFunc("/", indexHandler)
 	mux.HandleFunc("/users", usersHandler).Methods("GET")
 	mux.HandleFunc("/users", createUserHandler).Methods("POST")
-	mux.HandleFunc("/users/{id:[0-9]+}", getUserInfoHandler)
+	mux.HandleFunc("/users/{id:[0-9]+}", getUserInfoHandler).Methods("GET")
+	mux.HandleFunc("/users/{id:[0-9]+}", deleteUserHandler).Methods("DELETE")
 	return mux
 }
