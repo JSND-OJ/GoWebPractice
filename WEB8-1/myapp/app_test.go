@@ -204,7 +204,5 @@ func TestUsers_WithUsersData(t *testing.T) {
 	err = json.NewDecoder(resp.Body).Decode(&users)
 	assert.NoError(err)
 	assert.Equal(2, len(users))
-	fmt.Print(m[1])
-	fmt.Print(m[0])
 
 }

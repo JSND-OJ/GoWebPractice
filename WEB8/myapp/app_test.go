@@ -177,7 +177,7 @@ func TestUpdateUser(t *testing.T) { //put전송방식은 update로 반환받는�
 	err = json.NewDecoder(resp.Body).Decode(user) //서버가 보낸 정보를 읽어온다. 매개변수 입력
 	assert.NoError(err)
 	assert.NotEqual(0, user.ID)
-	log.Print("FistName Befor update:", user.FirstName)
+	log.Print("FistName Before update:", user.FirstName)
 
 	//
 	updateStr := fmt.Sprintf(`{"id":%d, "first_name":"Bin"}`, user.ID)
