@@ -91,6 +91,37 @@ func deleteUserHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, "Deleted User ID:", id)
 }
 
+func updateUserHandler(w http.ResponseWriter, r *http.Request) {
+
+	updateUser := new(User) //핸들러를 작동시키면 json데이터가 오도록 위에 user struct를 만들어준다
+	err := json.NewDecoder(r.Body).Decode(updateUser)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprint(w, err)
+		return
+	}
+	user, ok := userMap[updateUser.ID] //usermap에서 id를 찾아서 usermap에 id가 있는경우, user가 *User이므로(ex updateUser id가 11이면 유저맵의 id에 11을 넣어주고, 그게 있는지 확인)
+	if !ok {                           //usermap에 update id가 없는 경우, 즉 false
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprint(w, "No User ID:", updateUser.ID)
+		return //탈출!
+	}
+	if updateUser.FirstName != "" {
+		user.FirstName = updateUser.FirstName
+	}
+	if updateUser.LastName != "" {
+		user.LastName = updateUser.LastName
+	}
+	if updateUser.Email != "" {
+		user.Email = updateUser.Email
+	}
+	userMap[updateUser.ID] = user
+	w.Header().Add("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	data, _ := json.Marshal(user)
+	fmt.Fprint(w, string(data))
+}
+
 // NewHandler make a new myapp handler
 func NewHandler() http.Handler {
 	userMap = make(map[int]*User)
@@ -100,6 +131,7 @@ func NewHandler() http.Handler {
 	mux.HandleFunc("/", indexHandler)
 	mux.HandleFunc("/users", usersHandler).Methods("GET")
 	mux.HandleFunc("/users", createUserHandler).Methods("POST")
+	mux.HandleFunc("/users", updateUserHandler).Methods("PUT")
 	mux.HandleFunc("/users/{id:[0-9]+}", getUserInfoHandler).Methods("GET")
 	mux.HandleFunc("/users/{id:[0-9]+}", deleteUserHandler).Methods("DELETE")
 	return mux

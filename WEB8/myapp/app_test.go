@@ -2,6 +2,7 @@ package myapp
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -150,4 +151,57 @@ func TestDeleteUser(t *testing.T) {
 	data, _ = ioutil.ReadAll(resp.Body)
 	assert.Contains(string(data), "Deleted User ID:1")
 	log.Print(string(data))
+}
+
+func TestUpdateUser(t *testing.T) { //put전송방식은 update로 반환받는다
+	assert := assert.New(t)
+
+	ts := httptest.NewServer(NewHandler())
+	defer ts.Close()
+
+	req, _ := http.NewRequest("PUT", ts.URL+"/users",
+		strings.NewReader(`{"id":1, "first_name":"updated", "last_name":"updated", "email":"updated@naver.com"}`))
+	resp, err := http.DefaultClient.Do(req) //do(req): do(method)="put" 메소드를 정의
+	assert.NoError(err)
+	assert.Equal(http.StatusOK, resp.StatusCode)
+	data, _ := ioutil.ReadAll(resp.Body)
+	assert.Contains(string(data), "No User ID:1")
+
+	//위에서 확인한 결과 id가 없으므로 post방식을 써서 만들어준다
+	resp, err = http.Post(ts.URL+"/users", "application/json",
+		strings.NewReader(`{"first_name":"Jungheon", "last_name":"Oh", "email":"cuttleoh@naver.com"}`))
+	assert.NoError(err)
+	assert.Equal(http.StatusCreated, resp.StatusCode)
+
+	user := new(User)
+	err = json.NewDecoder(resp.Body).Decode(user) //서버가 보낸 정보를 읽어온다. 매개변수 입력
+	assert.NoError(err)
+	assert.NotEqual(0, user.ID)
+	log.Print("FistName Befor update:", user.FirstName)
+
+	//
+	updateStr := fmt.Sprintf(`{"id":%d, "first_name":"Bin"}`, user.ID)
+	//%d는 동적 id값을 넣을 수 있도록 정리하고 update요청(패킷)시에 first_name만 셋팅해서 보냈다
+	//first_name만 보내면 user구조체 json에서 Last_Name과 Email은 string형의 기본값, 즉 "" 공백문자열만 들어간다
+
+	req, _ = http.NewRequest("PUT", ts.URL+"/users", //put메소드는 기본 메소드가 아니므로 do(req) request에 메소드로 정의
+		strings.NewReader(updateStr)) //io로 updateStr 받는다
+	resp, err = http.DefaultClient.Do(req) //do(req): do(method)="put" 메소드를 정의
+	assert.NoError(err)
+	assert.Equal(http.StatusOK, resp.StatusCode)
+
+	updateUser := new(User)                             //서버가 upadte된 user정보 처리
+	err = json.NewDecoder(resp.Body).Decode(updateUser) //서버가 보낸 데이터를 읽어온다 = 매개변수 입력
+	assert.NoError(err)
+	assert.Equal(updateUser.ID, user.ID)
+	assert.Equal("Bin", updateUser.FirstName)
+	assert.Equal(user.LastName, updateUser.LastName)
+	assert.Equal(user.Email, updateUser.Email)
+
+	log.Print(user)
+	log.Print("User ID:", updateUser.ID)
+	log.Print("User Name:", updateUser.FirstName, updateUser.LastName)
+	log.Print("User Email:", updateUser.Email)
+	log.Print("Created at", updateUser.CreatedAt)
+
 }
