@@ -187,12 +187,17 @@ func TestUsers_WithUsersData(t *testing.T) {
 	defer ts.Close()
 
 	resp, err := http.Post(ts.URL+"/users", "application/json",
-		strings.NewReader(`{"first_name":"tucker", "last_name":"kim", "email":"tucker@naver.com"}`))
+		strings.NewReader(`{"first_name":"Jungheon", "last_name":"Oh", "email":"cuttleoh@naver.com"}`))
 	assert.NoError(err)
 	assert.Equal(http.StatusCreated, resp.StatusCode)
 
 	resp, err = http.Post(ts.URL+"/users", "application/json",
-		strings.NewReader(`{"first_name":"jason", "last_name":"park", "email":"jason@naver.com"}`))
+		strings.NewReader(`{"first_name":"Somebody", "last_name":"toLove", "email":"freddie@gmail.com"}`))
+	assert.NoError(err)
+	assert.Equal(http.StatusCreated, resp.StatusCode)
+
+	resp, err = http.Post(ts.URL+"/users", "application/json",
+		strings.NewReader(`{"first_name":"aaa", "last_name":"bbb", "email":"ccc@gmail.com"}`))
 	assert.NoError(err)
 	assert.Equal(http.StatusCreated, resp.StatusCode)
 
@@ -203,6 +208,9 @@ func TestUsers_WithUsersData(t *testing.T) {
 	users := []*User{}
 	err = json.NewDecoder(resp.Body).Decode(&users)
 	assert.NoError(err)
-	assert.Equal(2, len(users))
+	assert.Equal(3, len(users))
+	log.Print(users[len(users)-3])
+	log.Print(users[len(users)-2])
+	log.Print(users[len(users)-1])
 
 }
