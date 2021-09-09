@@ -92,21 +92,19 @@ func (self *ReadComponet) Operator(data string) {
 func main() {
 	//send component
 	sender := &EncryptComponent{ //sender는 zipComponent화 SendComponent 모두 가진 상태로
-		key: "asdf", //
-		com: &ZipComponent{ //압호화된 컴포넌트는 ZipComponent를 가지고
-			com: &SendComponent{}, //ZipComponent는 SendComponent를 가진다
-		},
+		key: "asdf",           //
+		com: &SendComponent{}, //ZipComponent는 SendComponent를 가진다
 	}
+
 	sender.Operator("Hello GoBlock") //sender 보내는 데이터 ""
 	fmt.Println(sentData)            //암호화+압축 데이터는 최족적으로 sentData에 들어있음
 
 	////receive component
-	receiver := &UnzipComponent{
-		com: &DecryptComponent{
-			key: "asdf",
-			com: &ReadComponet{},
-		},
+	receiver := &DecryptComponent{
+		key: "asdf",
+		com: &ReadComponet{},
 	}
+
 	receiver.Operator(sentData)
 	fmt.Println(recvData) //복호화 하고 압축을 푼 데이터 출력
 }
