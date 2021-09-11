@@ -27,17 +27,17 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func usersHandler(w http.ResponseWriter, r *http.Request) {
-	if len(userMap) == 0 {
+	if len(userMap) == 0 { // 유저맵이 비어있는 경우
 		w.WriteHeader(http.StatusOK)
 		fmt.Fprint(w, "No Users")
 		return
 	}
-	users := []*User{}
-	for _, u := range userMap {
-		users = append(users, u)
+	users := []*User{}          // 유저 리스트 만들고
+	for _, u := range userMap { // 맵을 돌면서
+		users = append(users, u) // 유저정보 넣어주고
 	}
 	data, _ := json.Marshal(users)
-	w.Header().Add("Content-Type", "application/json")
+	w.Header().Add("Content-Type", "application/json") //헤더에 json포멧이라고 알려주고
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprint(w, string(data))
 }

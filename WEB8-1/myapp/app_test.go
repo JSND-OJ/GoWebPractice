@@ -14,16 +14,19 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestIndex(t *testing.T) {
-	assert := assert.New(t)
+//1단계 TestIndex NewHandler() 등록빌드 검증테스팅
+func TestIndex(t *testing.T) { //test pkg 가져다 쓸려면 파일명 _test, 인자로 testing pkg의 T스트럭트
+	assert := assert.New(t) //어썰트 오브젝트 생성
 
-	ts := httptest.NewServer(NewHandler())
+	ts := httptest.NewServer(NewHandler()) //목업서버
 	defer ts.Close()
 
-	resp, err := http.Get(ts.URL)
-	assert.NoError(err)
-	assert.Equal(http.StatusOK, resp.StatusCode)
-	data, _ := ioutil.ReadAll(resp.Body)
+	resp, err := http.Get(ts.URL)                //URL이 문자열로 들어감.test서버의 url을 넣고 리턴값은 response와 error
+	assert.NoError(err)                          //에러가 엄써야 함
+	assert.Equal(http.StatusOK, resp.StatusCode) //response의 statusCode가 스테이터스오케이(200)와 같아야 함.
+
+	//2단계 hello world 데이터 테스팅 검사
+	data, _ := ioutil.ReadAll(resp.Body) //ioutil로 body값을 모두 읽어오고, 리턴값은 바이트어레이형식 data와 error, error는 무시.
 	log.Print(string(data))
 	assert.Equal("Hello World", string(data))
 }
@@ -64,7 +67,7 @@ func TestGetUserInfo(t *testing.T) {
 func TestCreateUser(t *testing.T) {
 	assert := assert.New(t)
 
-	ts := httptest.NewServer(NewHandler())
+	ts := httptest.NewServer(NewHandler()) //app.go 뉴핸들러 호출. 핸들러 만들어줘야해 왜? 반환을 처리
 	defer ts.Close()
 
 	resp, err := http.Post(ts.URL+"/users", "application/json",
@@ -72,20 +75,21 @@ func TestCreateUser(t *testing.T) {
 	assert.NoError(err)
 	assert.Equal(http.StatusCreated, resp.StatusCode)
 
-	user := new(User)
-	err = json.NewDecoder(resp.Body).Decode(user)
+	//위 post방식 json정보를 서버가 user정보를 받아서 user정보를 리턴하는 부분
+	user := new(User)                             //유저 맵 이라는 보관소
+	err = json.NewDecoder(resp.Body).Decode(user) //서버가 보낸 데이터를 읽어온다, encoder/decoder는 스트림기반 데이터를 다루고, encoder는 go value를 json으로 반환
 	assert.NoError(err)
-	assert.NotEqual(0, user.ID)
+	assert.NotEqual(0, user.ID) //유저 맵에 크리에이트된 값(user.ID)이 있다. user id 가 0이 아니다. 등록되어 있다
 
-	id := user.ID
-	resp, err = http.Get(ts.URL + "/users/" + strconv.Itoa(id))
+	id := user.ID                                               // :=인수 입력. 함수호출시 함수로 값을 전달해주는 값
+	resp, err = http.Get(ts.URL + "/users/" + strconv.Itoa(id)) //id 값 순서확인. 타겟은 유저맵. 해당하는 유저맵 뒤져.무언가를 확인할 때는 겟방식. 무언가를 조회할려면 겟. Itoa 정수형을 문자열로 변환. id정보를 get 방식으로 user/id를 넣어서 오도록 만든다.get방식 쓰는 이유? 저장된 값들을 확인할려고
 	assert.NoError(err)
 	assert.Equal(http.StatusOK, resp.StatusCode)
 
-	user2 := new(User)
-	err = json.NewDecoder(resp.Body).Decode(user2)
+	user2 := new(User)                             // :=인수 입력. 함수호출시 함수로 값을 전달해주는 값
+	err = json.NewDecoder(resp.Body).Decode(user2) //decode는 {}를 읽어온다
 	assert.NoError(err)
-	assert.Equal(user.ID, user2.ID)
+	assert.Equal(user.ID, user2.ID) //user id는 create한 user.id이고, 새로운 정보를 받은 user2 id iser2 id
 	assert.Equal(user.FirstName, user2.FirstName)
 
 	log.Print(user)
@@ -101,23 +105,26 @@ func TestDeleteUser(t *testing.T) {
 	ts := httptest.NewServer(NewHandler())
 	defer ts.Close()
 
-	req, _ := http.NewRequest("DELETE", ts.URL+"/users/1", nil)
-	resp, err := http.DefaultClient.Do(req)
+	//id등록시킨 적이 업다는 것을 확인
+	req, _ := http.NewRequest("DELETE", ts.URL+"/users/1", nil) //delete는 기본 메소드가 아니다. newmethod에 들어가서 메소드가 되는것. do(req) request에 메소드 정의.  id는 임의로 users/1,body값은 없다
+	resp, err := http.DefaultClient.Do(req)                     //Do(req): do(method)= "delete" rest api에서 기본전송 메소드로 정의. do가 받아서 드뎌 전송방식으로 쓰임
 	assert.NoError(err)
 	assert.Equal(http.StatusOK, resp.StatusCode)
-	data, _ := ioutil.ReadAll(resp.Body)
-	assert.Contains(string(data), "No User ID:1")
+	data, _ := ioutil.ReadAll(resp.Body)          //log찍고 어썰트 하려고 readall(resp.body)로 읽어온다. delete할 것이 없었다
+	assert.Contains(string(data), "No User ID:1") //핸들러 등록할 때 마다 user map이 최기화 되므로 '지울게 없었다. 즉 유저가 없다'는 메시지르 포함해야 한다
 
+	//user map id 1 등록(create). post 전송방식
 	resp, err = http.Post(ts.URL+"/users", "application/json",
 		strings.NewReader(`{"first_name":"Jungheon", "last_name":"Oh", "email":"cuttleoh@naver.com"}`))
 	assert.NoError(err)
 	assert.Equal(http.StatusCreated, resp.StatusCode)
 
 	user := new(User)
-	err = json.NewDecoder(resp.Body).Decode(user)
+	err = json.NewDecoder(resp.Body).Decode(user) //json을 go value로
 	assert.NoError(err)
 	assert.NotEqual(0, user.ID)
 
+	//다시 삭제
 	req, _ = http.NewRequest("DELETE", ts.URL+"/users/1", nil)
 	resp, err = http.DefaultClient.Do(req)
 	assert.NoError(err)
