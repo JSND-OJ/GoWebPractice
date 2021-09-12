@@ -16,13 +16,12 @@ func (u User) IsOld() bool {
 }
 
 func main() {
-	user := User{Name: "bbb", Email: "bbb@naver.com", Age: 18}
-	user2 := User{Name: "aaa", Email: "aaa@gmail.com", Age: 40}
-	//users := []User{user, user2}
-	tmpl, err := template.New("Tmpl1").ParseFiles("templates/tmpl1.tmpl")
+	user := User{Name: "Jungheon", Email: "cuttleoh@naver.com", Age: 18}
+	user2 := User{Name: "aaa", Email: "aaa@gmail.com", Age: 9999}
+	users := []User{user, user2}
+	tmpl, err := template.New("Tmpl1").ParseFiles("templates/tmpl1.tmpl", "templates/tmpl2.tmpl")
 	if err != nil {
 		panic(err)
 	}
-	tmpl.ExecuteTemplate(os.Stdout, "tmpl1.tmpl", user)
-	tmpl.ExecuteTemplate(os.Stdout, "tmpl1.tmpl", user2)
+	tmpl.ExecuteTemplate(os.Stdout, "tmpl2.tmpl", users)
 }
