@@ -54,5 +54,5 @@ func main() {
 
 	n := negroni.Classic()
 	n.UseHandler(mux)
-	http.ListenAndServe(":3005", n)
+	http.ListenAndServe(":3000", n)
 }
