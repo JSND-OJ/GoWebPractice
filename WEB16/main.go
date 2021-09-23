@@ -4,19 +4,22 @@ import (
 	"log"
 	"net/http"
 
-	"gopractice/goblock/goweb/web16/app"
-
+	"github.com/gorilla/pat"
 	"github.com/urfave/negroni"
 )
 
-func main() {
-	m := app.MakeaHandler()
-	n := negroni.Classic()
-	n.UseHandler(m)
+func postMessageHandler(w http.ResponseWriter, r *http.Request) {
+	msg := r.FormValue("msg")
+	name := r.FormValue("name")
+	log.Println("postMessageHandler ", msg, name)
+}
 
-	log.Println("Started App")
-	err := http.ListenAndServe(":3000", n)
-	if err != nil {
-		panic(err)
-	}
+func main() {
+	mux := pat.New()
+	mux.Post("/messages", postMessageHandler)
+
+	n := negroni.Classic()
+	n.UseHandler(mux)
+
+	http.ListenAndServe(":3000", n)
 }

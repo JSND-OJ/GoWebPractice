@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/gorilla/pat"
@@ -17,10 +18,10 @@ import (
 )
 
 var googleOauthConfig = oauth2.Config{
-	RedirectURL:  "http://localhost:3000/auth/google/callback", // 로그인 완료 후의 리다이렉트. 구글에서 알려준 결과, callback을 알려줄 곳
-	ClientID:     "",
-	ClientSecret: "",
-	Scopes:       []string{"https://www.googleapis.com/auth/userinfo.email"}, // 요청하는 데이터의 스코프. 권한 범위=auth=authority의 이메일. 이메일 권한 요청
+	RedirectURL:  "http://localhost:3000/auth/google/callback", // 로그인 완료 후의 리다이렉트. 구글에서 알려준 결과, callback을 알려줄 곳. URL to redirect users going through the OAuth flow, after the resource owner's URLs.
+	ClientID:     os.Getenv("GOOGLE_CLIENT_ID"),
+	ClientSecret: os.Getenv("GOOGLE_SECRET_KEY"),
+	Scopes:       []string{"https://www.googleapis.com/auth/userinfo.email"}, // 이메일 권한 요청. 요청하는 데이터의 스코프. 권한 범위=auth=authority의 이메일.
 	Endpoint:     google.Endpoint,
 }
 
@@ -28,7 +29,7 @@ var googleOauthConfig = oauth2.Config{
 // 222. 로그인 페이지 접속 시 유저를 식별하기 위해 생성한 랜덤한 state값을 사용해 구글 로그인 링크를 생성한다.
 func googleLoginHandler(w http.ResponseWriter, r *http.Request) { // 구글 로그인 요청을 받으면 googleOauthCoonfig를 통해 구글의 어떤경로로 보내야 되는 지가 나오고, 유저가 그 경로로 접근해서 로그인할 수 있도록 리다이렉트
 	state := generateStateOauthCookie(w)                   // AuthCodeURL에 들어가는 state.
-	url := googleOauthConfig.AuthCodeURL(state)            // state 받아서 로그인을 위한 URL반환. oath 제공자의 동의페이지(요구된 스코프에 대한 허가) url 반환.CSRF공격을 막기위한 토큰(state로 받음) 필요.
+	url := googleOauthConfig.AuthCodeURL(state)            // state 받아서 로그인을 위한 URL반환. oath 제공자의 동의페이지(요구된 스코프에 대한 허가) url 반환.
 	http.Redirect(w, r, url, http.StatusTemporaryRedirect) // 333. 이 경로로 리다이렉트 -> 거기서 로그인폼이 뜬다 => 완료되면 CallBack URL을 구글에서 알려준다(내가 구글 클라우드에서 설정해둔 주소)
 }
 
@@ -36,7 +37,7 @@ func generateStateOauthCookie(w http.ResponseWriter) string {
 	expiration := time.Now().Add(1 * 24 * time.Hour) // 현재 + 24시간
 
 	b := make([]byte, 16) //16바이트 array
-	rand.Read(b)          // 바이트가 헨덤하게 채워짐
+	rand.Read(b)          //
 	state := base64.URLEncoding.EncodeToString(b)
 	cookie := &http.Cookie{Name: "oauthstate", Value: state, Expires: expiration} //state가 들어갈 cookie struct 생성
 	http.SetCookie(w, cookie)                                                     // write에 cookie 넣어준다
@@ -74,7 +75,7 @@ func getGoogleUserInfo(code string) ([]byte, error) {
 
 	resp, err := http.Get(oauthGoogleUrlAPI + token.AccessToken) // 유저정보를 리퀘스트 하는 경로 "https://www.googleapis.com/oauth2/v2/userinfo?access_token="
 	if err != nil {
-		return nil, fmt.Errorf("Failed to Get UserInfo %s\n", err.Error())
+		return nil, fmt.Errorf("Dailed to Get UserInfo %s\n", err.Error())
 	}
 
 	return ioutil.ReadAll(resp.Body) // 위의 유저정보 리퀘스트 경로의 바디값, 즉 유저정보를 불러옴.
@@ -88,5 +89,4 @@ func main() {
 	n := negroni.Classic()
 	n.UseHandler(mux)
 	http.ListenAndServe(":3000", n)
-
 }
