@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"testing"
 
-	"goblock/goweb/web18/model"
+	"goblock/goweb/web17/model"
 
 	"github.com/stretchr/testify/assert"
 )

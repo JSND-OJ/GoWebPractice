@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"testing"
 
-	"goblock/goweb/web18/model"
+	"goblock/goweb/web19/model"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -40,7 +40,7 @@ func TestTodos(t *testing.T) {
 	todos := []*model.Todo{}
 	err = json.NewDecoder(resp.Body).Decode(&todos)
 	assert.NoError(err)
-	assert.Equal(len(todos), 2)
+	assert.Equal(2, len(todos))
 	for _, t := range todos {
 		if t.ID == id1 {
 			assert.Equal("Test todo", t.Name)
@@ -60,7 +60,7 @@ func TestTodos(t *testing.T) {
 	todos = []*model.Todo{}
 	err = json.NewDecoder(resp.Body).Decode(&todos)
 	assert.NoError(err)
-	assert.Equal(len(todos), 2)
+	assert.Equal(2, len(todos))
 	for _, t := range todos {
 		if t.ID == id1 {
 			assert.True(t.Completed)

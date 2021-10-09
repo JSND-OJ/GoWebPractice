@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"goblock/goweb/web18/model"
+	"goblock/goweb/web19/model"
 
 	"github.com/gorilla/mux"
 	"github.com/unrolled/render"
